@@ -3,6 +3,7 @@ import Lenis from 'lenis'
 import { Nav } from './components/Nav'
 import { Hero } from './components/Hero'
 import { Marquee } from './components/Marquee'
+import { WhatsNew } from './components/WhatsNew'
 import { Studio } from './components/Studio'
 import { Story } from './components/Story'
 import { Directors } from './components/Directors'
@@ -44,6 +45,7 @@ export default function App() {
       <main>
         <Hero />
         <Marquee />
+        <WhatsNew />
         <Studio />
         <Story />
         <Directors />

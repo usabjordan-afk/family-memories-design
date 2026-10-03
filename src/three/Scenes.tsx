@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import {
   ContactShadows,
   Environment,
@@ -11,8 +11,6 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { ApparelModel } from './ApparelModel'
 import type { PrintStyle, ProductId } from '../lib/products'
-
-export type ViewSide = 'front' | 'back'
 
 declare global {
   interface Window {
@@ -61,62 +59,43 @@ function Effects() {
   )
 }
 
-function GarmentOrbit({
-  autoRotate = true,
-  viewSide = 'front',
-}: {
-  autoRotate?: boolean
-  viewSide?: ViewSide
-}) {
+function GarmentOrbit({ autoRotate = true }: { autoRotate?: boolean }) {
   const controls = useRef<OrbitControlsImpl>(null)
-  const targetTheta = useRef(0)
-  const { camera } = useThree()
-
-  useEffect(() => {
-    targetTheta.current = viewSide === 'back' ? Math.PI : 0
-    if (controls.current) controls.current.autoRotate = false
-  }, [viewSide])
 
   useEffect(() => {
     const el = controls.current?.domElement
     if (!el) return
 
     const lockScroll = () => window.__fmdLenis?.stop()
-    const unlockScroll = () => window.__fmdLenis?.start()
+    const unlockScroll = () => {
+      window.__fmdLenis?.start()
+      // Resume gentle spin after user lets go
+      if (controls.current && autoRotate) {
+        window.setTimeout(() => {
+          if (controls.current) controls.current.autoRotate = true
+        }, 2200)
+      }
+    }
+    const pauseSpin = () => {
+      lockScroll()
+      if (controls.current) controls.current.autoRotate = false
+    }
 
-    el.addEventListener('pointerdown', lockScroll)
+    el.addEventListener('pointerdown', pauseSpin)
     el.addEventListener('pointerup', unlockScroll)
     el.addEventListener('pointercancel', unlockScroll)
     el.addEventListener('pointerleave', unlockScroll)
     window.addEventListener('pointerup', unlockScroll)
 
     return () => {
-      el.removeEventListener('pointerdown', lockScroll)
+      el.removeEventListener('pointerdown', pauseSpin)
       el.removeEventListener('pointerup', unlockScroll)
       el.removeEventListener('pointercancel', unlockScroll)
       el.removeEventListener('pointerleave', unlockScroll)
       window.removeEventListener('pointerup', unlockScroll)
       unlockScroll()
     }
-  }, [])
-
-  useFrame(() => {
-    const c = controls.current
-    if (!c) return
-    const offset = camera.position.clone().sub(c.target)
-    const spherical = new THREE.Spherical().setFromVector3(offset)
-    let diff = targetTheta.current - spherical.theta
-    while (diff > Math.PI) diff -= Math.PI * 2
-    while (diff < -Math.PI) diff += Math.PI * 2
-    if (Math.abs(diff) > 0.008) {
-      spherical.theta += diff * 0.14
-      offset.setFromSpherical(spherical)
-      camera.position.copy(c.target).add(offset)
-      c.update()
-    } else if (autoRotate && Math.abs(diff) <= 0.008) {
-      c.autoRotate = true
-    }
-  })
+  }, [autoRotate])
 
   return (
     <OrbitControls
@@ -128,7 +107,7 @@ function GarmentOrbit({
       dampingFactor={0.08}
       rotateSpeed={0.9}
       autoRotate={autoRotate}
-      autoRotateSpeed={1.15}
+      autoRotateSpeed={1.35}
       minPolarAngle={Math.PI * 0.32}
       maxPolarAngle={Math.PI * 0.62}
       target={[0, 0.05, 0]}
@@ -153,13 +132,11 @@ function CanvasShell({
   className,
   camera,
   autoRotate,
-  viewSide,
   children,
 }: {
   className?: string
   camera: { position: [number, number, number]; fov: number }
   autoRotate?: boolean
-  viewSide?: ViewSide
   children: React.ReactNode
 }) {
   return (
@@ -199,7 +176,7 @@ function CanvasShell({
             background={false}
           />
           {children}
-          <GarmentOrbit autoRotate={autoRotate} viewSide={viewSide} />
+          <GarmentOrbit autoRotate={autoRotate} />
           <Effects />
         </Suspense>
       </Canvas>
@@ -256,7 +233,6 @@ export function StudioCanvas({
   print,
   playerName,
   playerNumber,
-  viewSide = 'front',
   customLogoUrl = null,
 }: {
   product: ProductId
@@ -265,15 +241,13 @@ export function StudioCanvas({
   print: PrintStyle
   playerName: string
   playerNumber: string
-  viewSide?: ViewSide
   customLogoUrl?: string | null
 }) {
   return (
     <CanvasShell
       className="canvas-wrap studio-canvas"
       camera={{ position: [0.1, 0.12, 5.6], fov: 26 }}
-      autoRotate={false}
-      viewSide={viewSide}
+      autoRotate
     >
       <Float speed={0.55} rotationIntensity={0} floatIntensity={0.08}>
         <ApparelModel

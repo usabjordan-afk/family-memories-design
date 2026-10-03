@@ -53,8 +53,8 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.58, duration: 0.8 }}
         >
-          We bring the shop to your tournament — names, numbers, and event
-          branding, same day.
+          Upload your tournament logo, pick any color, add name & number —
+          printed same day on-site.
         </motion.p>
 
         <motion.div

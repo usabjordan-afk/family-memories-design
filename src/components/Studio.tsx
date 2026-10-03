@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { StudioCanvas, type ViewSide } from '../three/Scenes'
+import { StudioCanvas } from '../three/Scenes'
 import {
   COLORS,
   PRINTS,
@@ -25,7 +25,6 @@ export function Studio() {
   const [print, setPrint] = useState<PrintStyle>('crest')
   const [name, setName] = useState('MAYA')
   const [number, setNumber] = useState('7')
-  const [viewSide, setViewSide] = useState<ViewSide>('front')
   const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null)
   const [logoName, setLogoName] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -73,8 +72,8 @@ export function Studio() {
           <p className="eyebrow">Live booth preview</p>
           <h2 className="display">Spin it. Color it. Make it theirs.</h2>
           <p className="lede">
-            Drag the garment, flip front/back, upload a tournament logo, and add
-            a player name — exactly like we print at the booth.
+            Full 360° rotate. Upload a tournament logo, pick any color, add name
+            and number — then save a preview or book the booth.
           </p>
         </div>
 
@@ -87,29 +86,14 @@ export function Studio() {
               print={activePrint}
               playerName={name}
               playerNumber={number}
-              viewSide={viewSide}
               customLogoUrl={customLogoUrl}
             />
-            <div className="studio-view-toggle" role="group" aria-label="View side">
-              <button
-                type="button"
-                className={viewSide === 'front' ? 'pill active' : 'pill'}
-                onClick={() => setViewSide('front')}
-              >
-                Front
-              </button>
-              <button
-                type="button"
-                className={viewSide === 'back' ? 'pill active' : 'pill'}
-                onClick={() => setViewSide('back')}
-              >
-                Back
-              </button>
-            </div>
-            <p className="studio-hint">Drag to rotate</p>
+            <p className="studio-hint">Auto 360° · drag anytime</p>
           </div>
 
           <div className="studio-panel">
+            <div className="studio-new-badge">New controls below</div>
+
             <fieldset>
               <legend>1 · Product</legend>
               <div className="chip-grid">
@@ -128,7 +112,7 @@ export function Studio() {
             </fieldset>
 
             <fieldset>
-              <legend>2 · Color</legend>
+              <legend>2 · Color · + custom</legend>
               <div className="swatches">
                 {COLORS.map((c) => (
                   <button
@@ -146,7 +130,7 @@ export function Studio() {
                     }}
                   />
                 ))}
-                <label className="swatch-custom" title="Custom color">
+                <label className="swatch-custom" title="Pick any color">
                   <input
                     type="color"
                     value={customHex || colorHex}
@@ -185,8 +169,8 @@ export function Studio() {
               </div>
             </fieldset>
 
-            <fieldset>
-              <legend>4 · Tournament logo</legend>
+            <fieldset className="studio-feature">
+              <legend>4 · Upload tournament logo · NEW</legend>
               <div className="logo-upload">
                 <input
                   ref={fileRef}
@@ -197,7 +181,7 @@ export function Studio() {
                 />
                 <button
                   type="button"
-                  className="btn btn-ghost upload-btn"
+                  className="btn btn-primary upload-btn"
                   onClick={() => fileRef.current?.click()}
                 >
                   Upload logo
@@ -219,12 +203,12 @@ export function Studio() {
               <p className="upload-meta">
                 {logoName
                   ? `Using: ${logoName}`
-                  : 'PNG / JPG / WebP · defaults to Family Memories crest'}
+                  : 'PNG / JPG / WebP — replaces the crest on the garment'}
               </p>
             </fieldset>
 
             <fieldset>
-              <legend>5 · Player</legend>
+              <legend>5 · Player name & number</legend>
               <div className="player-fields">
                 <label>
                   Name
@@ -259,7 +243,7 @@ export function Studio() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Save preview
+                Save preview PNG
               </motion.button>
               <motion.a
                 className="btn btn-primary studio-cta"
@@ -267,7 +251,7 @@ export function Studio() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Book this look
+                Book booth
               </motion.a>
             </div>
           </div>

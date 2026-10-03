@@ -4,7 +4,6 @@ import {
   ContactShadows,
   Environment,
   Float,
-  Lightformer,
   PresentationControls,
 } from '@react-three/drei'
 import * as THREE from 'three'
@@ -39,36 +38,11 @@ function StudioLights() {
 
 function SoftEnv() {
   return (
-    <Environment resolution={1024} environmentIntensity={0.85}>
-      <Lightformer
-        form="rect"
-        intensity={3}
-        position={[0, 5, 3]}
-        scale={[10, 4, 1]}
-        color="#ffffff"
-      />
-      <Lightformer
-        form="rect"
-        intensity={1.8}
-        position={[-5, 1.5, 2]}
-        scale={[5, 8, 1]}
-        color="#9ad7ff"
-      />
-      <Lightformer
-        form="rect"
-        intensity={1.4}
-        position={[5, 0.8, -1]}
-        scale={[4, 7, 1]}
-        color="#ffe6cc"
-      />
-      <Lightformer
-        form="ring"
-        intensity={0.9}
-        position={[0, 0, -5]}
-        scale={8}
-        color="#e8f2fa"
-      />
-    </Environment>
+    <Environment
+      files="/hdri/studio.hdr"
+      environmentIntensity={0.95}
+      background={false}
+    />
   )
 }
 
@@ -77,7 +51,7 @@ function configureGl(gl: THREE.WebGLRenderer) {
   gl.toneMappingExposure = 1.12
   gl.outputColorSpace = THREE.SRGBColorSpace
   gl.shadowMap.enabled = true
-  gl.shadowMap.type = THREE.PCFSoftShadowMap
+  gl.shadowMap.type = THREE.PCFShadowMap
 }
 
 export function HeroCanvas({

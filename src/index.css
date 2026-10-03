@@ -15,9 +15,9 @@
   --fog: #9db2c2;
   --teal: #3ad6bf;
   --teal-deep: #1fa892;
-  --sun: #e8b84a;
+  --sun: #ff7a3d;
   --paper: #f3f6f9;
-  --line: rgba(232, 238, 244, 0.12);
+  --line: rgba(232, 238, 244, 0.14);
   --glow: rgba(58, 214, 191, 0.28);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --nav-h: 4.5rem;
@@ -141,13 +141,15 @@ p {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--teal) 0%, #63e7d2 100%);
-  color: var(--ink);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px var(--glow);
+  background: linear-gradient(135deg, var(--sun) 0%, #ff9a5c 100%);
+  color: #1a0d08;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 18px 40px rgba(255, 122, 61, 0.28);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 22px 48px var(--glow);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 22px 48px rgba(255, 122, 61, 0.34);
 }
 
 .btn-ghost {

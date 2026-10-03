@@ -16,7 +16,7 @@ export function Nav() {
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
       <a className="nav-brand" href="#top" aria-label="Family Memories Design home">
-        <span className="nav-mark">FMD</span>
+        <img className="nav-logo" src="/img/logo.png" alt="" width="40" height="32" />
         <span className="nav-name">
           Family Memories
           <em>Design</em>
@@ -29,8 +29,8 @@ export function Nav() {
           </a>
         ))}
       </nav>
-      <a className="btn btn-primary nav-cta" href="tel:+17203051643">
-        Call Will
+      <a className="btn btn-primary nav-cta" href="#book">
+        Book tournament
       </a>
     </motion.header>
   )

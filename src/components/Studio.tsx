@@ -17,6 +17,10 @@ export function Studio() {
   const [number, setNumber] = useState('7')
 
   const color = COLORS.find((c) => c.id === colorId) ?? COLORS[0]
+  const activePrint =
+    (product === 'zip' || product === 'hoodie') && print === 'crest'
+      ? 'left'
+      : print
 
   return (
     <section className="section studio" id="studio">
@@ -36,7 +40,7 @@ export function Studio() {
               product={product}
               color={color.hex}
               ink={color.ink}
-              print={print}
+              print={activePrint}
               playerName={name}
               playerNumber={number}
             />
@@ -81,16 +85,28 @@ export function Studio() {
             <fieldset>
               <legend>3 · Front print</legend>
               <div className="chip-row">
-                {PRINTS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={print === p.id ? 'pill active' : 'pill'}
-                    onClick={() => setPrint(p.id)}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+                {PRINTS.map((p) => {
+                  const disabled =
+                    (product === 'zip' || product === 'hoodie') && p.id === 'crest'
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={disabled}
+                      className={print === p.id ? 'pill active' : 'pill'}
+                      title={
+                        disabled
+                          ? 'Full-chest print is not available on zip hoodies'
+                          : undefined
+                      }
+                      onClick={() => {
+                        if (!disabled) setPrint(p.id)
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  )
+                })}
               </div>
             </fieldset>
 

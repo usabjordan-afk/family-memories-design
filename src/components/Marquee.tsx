@@ -5,10 +5,6 @@ const items = [
   'No minimums',
   '$0 to directors',
   'Names & numbers',
-  'Hoodies & tees',
-  'Youth sports focused',
-  'Port & Company',
-  'Family-run booth',
 ]
 
 export function Marquee() {

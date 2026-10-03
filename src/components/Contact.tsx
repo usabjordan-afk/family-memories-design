@@ -53,6 +53,9 @@ export function Footer() {
       <div className="section-inner footer-inner">
         <p>© {new Date().getFullYear()} Family Memories Design LLC</p>
         <p>On-site tournament apparel · Printed while you wait</p>
+        <p className="footer-credit">
+          3D garments adapted from Style3D Meta assets on Sketchfab
+        </p>
       </div>
     </footer>
   )

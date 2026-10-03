@@ -1,13 +1,49 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PrintStyle, ProductId } from '../lib/products'
 
-function makeCrestTexture(
-  colorInk: string,
+// useDraco=true, useMeshopt=true — garments are meshopt-compressed glbs
+useGLTF.preload('/models/crewneck.glb', true, true)
+useGLTF.preload('/models/tshirt.glb', true, true)
+useGLTF.preload('/models/hoodie.glb', true, true)
+
+const MODEL_URL = {
+  crew: '/models/crewneck.glb',
+  tee: '/models/tshirt.glb',
+  hoodie: '/models/hoodie.glb',
+} as const
+
+const PRINT = {
+  crew: {
+    full: { x: 0, y: 0.33, w: 0.86 },
+    left: { x: 0.27, y: 0.6, w: 0.27 },
+  },
+  tee: {
+    full: { x: 0, y: 0.38, w: 0.82 },
+    left: { x: 0.3, y: 0.6, w: 0.27 },
+  },
+  hoodie: {
+    full: { x: 0, y: 0.05, w: 0.7 },
+    left: { x: 0.26, y: 0.12, w: 0.24 },
+  },
+} as const
+
+const HEIGHT = 2.3
+
+function kindFromProduct(product: ProductId): keyof typeof MODEL_URL {
+  if (product === 'tee') return 'tee'
+  if (product === 'hoodie' || product === 'zip') return 'hoodie'
+  return 'crew'
+}
+
+function makePrintTexture(
+  ink: string,
   name: string,
   number: string,
   style: PrintStyle,
+  logo: HTMLImageElement | null,
 ) {
   const canvas = document.createElement('canvas')
   canvas.width = 1024
@@ -18,79 +54,40 @@ function makeCrestTexture(
   if (style === 'blank') {
     const tex = new THREE.CanvasTexture(canvas)
     tex.colorSpace = THREE.SRGBColorSpace
-    tex.anisotropy = 8
     return tex
   }
 
-  const cx = style === 'left' ? 300 : 512
-  const cy = style === 'left' ? 340 : 400
-  const scale = style === 'left' ? 0.52 : 1
-
-  ctx.save()
-  ctx.translate(cx, cy)
-  ctx.scale(scale, scale)
-
-  // Soft glow plate
-  const glow = ctx.createRadialGradient(0, 0, 20, 0, 0, 190)
-  glow.addColorStop(0, hexToRgba(colorInk, 0.18))
-  glow.addColorStop(1, hexToRgba(colorInk, 0))
-  ctx.fillStyle = glow
-  ctx.beginPath()
-  ctx.arc(0, 0, 190, 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.beginPath()
-  ctx.arc(0, 0, 168, 0, Math.PI * 2)
-  ctx.strokeStyle = colorInk
-  ctx.lineWidth = 9
-  ctx.stroke()
-
-  ctx.beginPath()
-  ctx.arc(0, 0, 148, 0, Math.PI * 2)
-  ctx.strokeStyle = colorInk
-  ctx.globalAlpha = 0.4
-  ctx.lineWidth = 2.5
-  ctx.stroke()
-  ctx.globalAlpha = 1
-
-  // Crest shield
-  ctx.beginPath()
-  ctx.moveTo(0, -108)
-  ctx.bezierCurveTo(78, -108, 108, -42, 108, 12)
-  ctx.bezierCurveTo(108, 78, 50, 122, 0, 148)
-  ctx.bezierCurveTo(-50, 122, -108, 78, -108, 12)
-  ctx.bezierCurveTo(-108, -42, -78, -108, 0, -108)
-  ctx.closePath()
-  ctx.fillStyle = hexToRgba(colorInk, 0.14)
-  ctx.fill()
-  ctx.strokeStyle = colorInk
-  ctx.lineWidth = 7
-  ctx.stroke()
-
-  ctx.fillStyle = colorInk
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = '800 62px Syne, sans-serif'
-  ctx.fillText('FMD', 0, -18)
-
-  ctx.font = '600 20px Outfit, sans-serif'
-  ctx.letterSpacing = '5px'
-  ctx.fillText('FAMILY MEMORIES', 0, 38)
-  ctx.font = '500 16px Outfit, sans-serif'
-  ctx.fillText('DESIGN', 0, 62)
-  ctx.restore()
+  const left = style === 'left'
+  if (logo && logo.naturalWidth) {
+    const ar = logo.naturalWidth / logo.naturalHeight
+    let w = left ? 1024 * 0.34 : 1024 * 0.7
+    let h = w / ar
+    const maxH = left ? 1024 * 0.34 : 1024 * 0.7
+    if (h > maxH) {
+      h = maxH
+      w = h * ar
+    }
+    const cx = left ? 1024 * 0.72 : 512
+    const cy = left ? 1024 * 0.28 : 1024 * 0.36
+    ctx.drawImage(logo, cx - w / 2, cy - h / 2, w, h)
+  } else {
+    ctx.fillStyle = ink
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = '800 96px Syne, sans-serif'
+    ctx.fillText('FMD', left ? 720 : 512, left ? 320 : 420)
+  }
 
   if (name || number) {
-    ctx.fillStyle = colorInk
+    ctx.fillStyle = ink
     ctx.textAlign = 'center'
     if (number) {
-      ctx.font = '800 130px Syne, sans-serif'
-      ctx.fillText(number.slice(0, 2), 512, 730)
+      ctx.font = '800 140px Syne, sans-serif'
+      ctx.fillText(number.slice(0, 2), 512, 780)
     }
     if (name) {
       ctx.font = '700 46px Outfit, sans-serif'
-      ctx.letterSpacing = '6px'
-      ctx.fillText(name.toUpperCase().slice(0, 12), 512, number ? 818 : 760)
+      ctx.fillText(name.toUpperCase().slice(0, 12), 512, number ? 870 : 800)
     }
   }
 
@@ -99,76 +96,6 @@ function makeCrestTexture(
   tex.anisotropy = 8
   tex.needsUpdate = true
   return tex
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  const h = hex.replace('#', '')
-  const full =
-    h.length === 3
-      ? h
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : h
-  const n = Number.parseInt(full, 16)
-  const r = (n >> 16) & 255
-  const g = (n >> 8) & 255
-  const b = n & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-function useFabric(color: string, darker = 0) {
-  return useMemo(() => {
-    const c = new THREE.Color(color)
-    if (darker) c.offsetHSL(0, 0, darker)
-    return new THREE.MeshPhysicalMaterial({
-      color: c,
-      roughness: 0.78,
-      metalness: 0.04,
-      sheen: 1,
-      sheenRoughness: 0.48,
-      sheenColor: new THREE.Color('#ffffff'),
-      clearcoat: 0.04,
-      clearcoatRoughness: 0.85,
-    })
-  }, [color, darker])
-}
-
-function RoundedTorso({
-  width,
-  height,
-  depth,
-  material,
-}: {
-  width: number
-  height: number
-  depth: number
-  material: THREE.Material
-}) {
-  const geo = useMemo(() => {
-    const g = new THREE.BoxGeometry(width, height, depth, 8, 10, 4)
-    const pos = g.attributes.position
-    const v = new THREE.Vector3()
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i)
-      // Soften sides into a body-like taper
-      const yNorm = (v.y + height / 2) / height
-      const taper = 1 - Math.pow(1 - yNorm, 1.4) * 0.08
-      const belly = 1 + Math.sin(yNorm * Math.PI) * 0.035
-      v.x *= taper * belly
-      v.z *= 0.92 + Math.sin(yNorm * Math.PI) * 0.08
-      // Round corners slightly
-      const edge = Math.min(1, Math.abs(v.x) / (width * 0.5))
-      v.z *= 1 - edge * 0.08
-      pos.setXYZ(i, v.x, v.y, v.z)
-    }
-    g.computeVertexNormals()
-    return g
-  }, [width, height, depth])
-
-  return (
-    <mesh geometry={geo} material={material} castShadow receiveShadow />
-  )
 }
 
 export function ApparelModel({
@@ -188,181 +115,95 @@ export function ApparelModel({
   playerNumber: string
   animated?: boolean
 }) {
+  const kind = kindFromProduct(product)
+  const gltf = useGLTF(MODEL_URL[kind], true, true)
   const group = useRef<THREE.Group>(null)
-  const fabric = useFabric(color)
-  const rib = useFabric(color, -0.05)
-  const lining = useFabric(color, -0.08)
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null)
+
+  useEffect(() => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => setLogo(img)
+    img.src = '/img/logo2x.png'
+  }, [])
+
+  const scene = useMemo(() => {
+    const root = gltf.scene.clone(true)
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      const mat = mesh.material as THREE.MeshPhysicalMaterial
+      const matName = mat?.name || ''
+      if (matName.startsWith('fabric') || matName === 'zip_tape') {
+        const next = mat.clone() as THREE.MeshPhysicalMaterial
+        next.color = new THREE.Color(color)
+        if (matName === 'fabric_rib') next.color.multiplyScalar(0.94)
+        if (matName === 'zip_tape') next.color.multiplyScalar(0.8)
+        const hsl = { h: 0, s: 0, l: 0 }
+        new THREE.Color(color).getHSL(hsl)
+        if ('sheen' in next) {
+          next.sheen = hsl.l < 0.2 ? 0.6 : 1
+          next.sheenColor = new THREE.Color(color).lerp(
+            new THREE.Color('#ffffff'),
+            0.25 + hsl.l * 0.4,
+          )
+        }
+        mesh.material = next
+        mesh.castShadow = true
+        mesh.receiveShadow = true
+      } else if (mat) {
+        mesh.material = Array.isArray(mat) ? mat.map((m) => m.clone()) : mat.clone()
+      }
+    })
+
+    root.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(root)
+    const sizeY = Math.max(0.001, box.max.y - box.min.y)
+    root.scale.setScalar(HEIGHT / sizeY)
+    root.updateMatrixWorld(true)
+    const box2 = new THREE.Box3().setFromObject(root)
+    const center = box2.getCenter(new THREE.Vector3())
+    root.position.sub(center)
+    root.position.y += 0.05
+    return root
+  }, [gltf.scene, color, kind])
 
   const printMap = useMemo(
-    () => makeCrestTexture(ink, playerName, playerNumber, print),
-    [ink, playerName, playerNumber, print],
+    () => makePrintTexture(ink, playerName, playerNumber, print, logo),
+    [ink, playerName, playerNumber, print, logo],
   )
 
-  const printMat = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        map: printMap,
-        transparent: true,
-        roughness: 0.65,
-        metalness: 0,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
-    [printMap],
-  )
+  const place =
+    print === 'blank' ? null : PRINT[kind][print === 'left' ? 'left' : 'full']
 
   useFrame((state) => {
     if (!animated || !group.current) return
-    group.current.position.y = Math.sin(state.clock.elapsedTime * 0.9) * 0.04
+    const t = state.clock.elapsedTime
+    group.current.rotation.y = 0.2 + Math.sin(t * 0.35) * 0.5
+    group.current.position.y = Math.sin(t * 0.85) * 0.04
   })
 
-  const isHoodie = product === 'hoodie' || product === 'zip'
-  const isTee = product === 'tee'
-  const torsoW = isTee ? 1.5 : 1.68
-  const torsoH = isTee ? 1.5 : 1.72
-  const torsoD = isTee ? 0.46 : 0.56
-  const sleeveL = isTee ? 0.42 : 0.92
-  const sleeveR = isTee ? 0.2 : 0.24
-
   return (
-    <group ref={group} position={[0, isHoodie ? -0.1 : 0, 0]}>
-      <group position={[0, 0.12, 0]}>
-        <RoundedTorso
-          width={torsoW}
-          height={torsoH}
-          depth={torsoD}
-          material={fabric}
-        />
-
-        {/* Neck opening fill */}
-        <mesh position={[0, torsoH / 2 - 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.26, 0.09, 12, 28]} />
-          <primitive object={rib} attach="material" />
+    <group ref={group} rotation={animated ? [0, 0, 0] : [0, 0.35, 0]}>
+      <primitive object={scene} />
+      {place && (
+        <mesh position={[place.x, place.y, 0.52]} scale={[place.w, place.w, 1]}>
+          <planeGeometry args={[1, 1]} />
+          <meshStandardMaterial
+            map={printMap}
+            transparent
+            roughness={0.7}
+            metalness={0}
+            depthWrite={false}
+            polygonOffset
+            polygonOffsetFactor={-4}
+          />
         </mesh>
-
-        {/* Shoulders */}
-        <mesh
-          castShadow
-          position={[-0.72, torsoH / 2 - 0.28, 0]}
-          rotation={[0, 0, 0.42]}
-        >
-          <capsuleGeometry args={[0.24, 0.28, 8, 16]} />
-          <primitive object={fabric} attach="material" />
-        </mesh>
-        <mesh
-          castShadow
-          position={[0.72, torsoH / 2 - 0.28, 0]}
-          rotation={[0, 0, -0.42]}
-        >
-          <capsuleGeometry args={[0.24, 0.28, 8, 16]} />
-          <primitive object={fabric} attach="material" />
-        </mesh>
-
-        {/* Sleeves */}
-        <mesh
-          castShadow
-          position={[-1.02, isTee ? 0.42 : 0.18, 0]}
-          rotation={[0.08, 0, 0.62]}
-        >
-          <capsuleGeometry args={[sleeveR, sleeveL, 8, 18]} />
-          <primitive object={fabric} attach="material" />
-        </mesh>
-        <mesh
-          castShadow
-          position={[1.02, isTee ? 0.42 : 0.18, 0]}
-          rotation={[0.08, 0, -0.62]}
-        >
-          <capsuleGeometry args={[sleeveR, sleeveL, 8, 18]} />
-          <primitive object={fabric} attach="material" />
-        </mesh>
-
-        {/* Cuffs */}
-        {!isTee && (
-          <>
-            <mesh
-              castShadow
-              position={[-1.28, -0.42, 0.05]}
-              rotation={[0.1, 0, 0.62]}
-            >
-              <capsuleGeometry args={[0.23, 0.08, 6, 14]} />
-              <primitive object={rib} attach="material" />
-            </mesh>
-            <mesh
-              castShadow
-              position={[1.28, -0.42, 0.05]}
-              rotation={[0.1, 0, -0.62]}
-            >
-              <capsuleGeometry args={[0.23, 0.08, 6, 14]} />
-              <primitive object={rib} attach="material" />
-            </mesh>
-          </>
-        )}
-
-        {/* Hem */}
-        <mesh castShadow position={[0, -torsoH / 2 + 0.06, 0]}>
-          <boxGeometry args={[torsoW * 0.98, 0.13, torsoD * 1.04]} />
-          <primitive object={rib} attach="material" />
-        </mesh>
-
-        {isHoodie && (
-          <group>
-            <mesh castShadow position={[-0.2, torsoH / 2 + 0.18, -0.12]} rotation={[0.55, 0.25, 0.1]}>
-              <sphereGeometry args={[0.3, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.7]} />
-              <primitive object={lining} attach="material" />
-            </mesh>
-            <mesh castShadow position={[0.2, torsoH / 2 + 0.18, -0.12]} rotation={[0.55, -0.25, -0.1]}>
-              <sphereGeometry args={[0.3, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.7]} />
-              <primitive object={lining} attach="material" />
-            </mesh>
-            <mesh castShadow position={[0, torsoH / 2 + 0.05, -0.22]}>
-              <torusGeometry args={[0.22, 0.1, 10, 20, Math.PI * 1.2]} />
-              <primitive object={fabric} attach="material" />
-            </mesh>
-            <mesh castShadow position={[0, -0.2, torsoD / 2 + 0.02]}>
-              <boxGeometry args={[0.95, 0.42, 0.1]} />
-              <primitive object={rib} attach="material" />
-            </mesh>
-            {product === 'zip' && (
-              <mesh position={[0, 0.05, torsoD / 2 + 0.03]}>
-                <boxGeometry args={[0.05, torsoH * 0.85, 0.02]} />
-                <meshStandardMaterial
-                  color="#2c343c"
-                  metalness={0.7}
-                  roughness={0.3}
-                />
-              </mesh>
-            )}
-            {/* Drawstrings */}
-            <mesh position={[-0.08, torsoH / 2 - 0.15, torsoD / 2 + 0.02]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.45, 8]} />
-              <meshStandardMaterial color={ink} roughness={0.6} />
-            </mesh>
-            <mesh position={[0.08, torsoH / 2 - 0.15, torsoD / 2 + 0.02]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.45, 8]} />
-              <meshStandardMaterial color={ink} roughness={0.6} />
-            </mesh>
-          </group>
-        )}
-
-        {print !== 'blank' && (
-          <mesh
-            position={
-              print === 'left'
-                ? [-0.36, 0.42, torsoD / 2 + 0.015]
-                : [0, 0.22, torsoD / 2 + 0.015]
-            }
-            scale={print === 'left' ? 0.52 : 1}
-          >
-            <planeGeometry args={[1.2, 1.2]} />
-            <primitive object={printMat} attach="material" />
-          </mesh>
-        )}
-      </group>
-
+      )}
       {animated && (
-        <mesh position={[0, -1.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.5, 0.78, 64]} />
-          <meshBasicMaterial color="#3ad6bf" transparent opacity={0.16} />
+        <mesh position={[0, -1.28, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.7, 0.95, 64]} />
+          <meshBasicMaterial color="#3ad6bf" transparent opacity={0.2} />
         </mesh>
       )}
     </group>

@@ -8,10 +8,10 @@ export type ApparelColor = {
 }
 
 export const COLORS: ApparelColor[] = [
-  { id: 'aqua', label: 'Aqua', hex: '#4ecdc4', ink: '#0b2a2a' },
+  { id: 'aqua', label: 'Aqua', hex: '#6fbfbf', ink: '#1a2f2f' },
   { id: 'navy', label: 'Navy', hex: '#1c3550', ink: '#e8eef4' },
-  { id: 'black', label: 'Black', hex: '#14181c', ink: '#e8eef4' },
-  { id: 'white', label: 'White', hex: '#f2f4f6', ink: '#132a38' },
+  { id: 'black', label: 'Black', hex: '#141a1c', ink: '#f3eef7' },
+  { id: 'white', label: 'Bone', hex: '#efeae9', ink: '#3a1d48' },
   { id: 'forest', label: 'Forest', hex: '#1f4d3a', ink: '#e8eef4' },
   { id: 'crimson', label: 'Crimson', hex: '#9b1e2e', ink: '#e8eef4' },
   { id: 'gold', label: 'Gold', hex: '#d4a017', ink: '#1a1408' },

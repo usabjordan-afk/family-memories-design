@@ -24,6 +24,13 @@
   gap: 0.7rem;
 }
 
+.nav-logo {
+  width: 2.4rem;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(58, 214, 191, 0.25));
+}
+
 .nav-mark {
   display: grid;
   place-items: center;
@@ -60,13 +67,14 @@
 }
 
 .nav-links a {
-  color: var(--fog);
+  color: rgba(232, 238, 244, 0.88);
   font-size: 0.92rem;
+  font-weight: 500;
   transition: color 0.25s ease;
 }
 
 .nav-links a:hover {
-  color: var(--mist);
+  color: #fff;
 }
 
 .nav-cta {
@@ -115,9 +123,9 @@
 
 .hero-stage {
   position: absolute;
-  inset: 0;
+  inset: 8% 0 0 38%;
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .hero-stage .canvas-wrap,
@@ -126,10 +134,11 @@
   height: 100% !important;
 }
 
-@media (min-width: 900px) {
+@media (max-width: 899px) {
   .hero-stage {
-    left: 28%;
-    pointer-events: auto;
+    inset: 0;
+    opacity: 0.55;
+    pointer-events: none;
   }
 }
 
@@ -405,8 +414,13 @@
   transition: all 0.25s ease;
 }
 
+.pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .pill.active,
-.pill:hover {
+.pill:hover:not(:disabled) {
   color: var(--ink);
   background: var(--teal);
   border-color: var(--teal);
@@ -777,6 +791,12 @@
   gap: 0.75rem;
   color: var(--fog);
   font-size: 0.9rem;
+}
+
+.footer-credit {
+  width: 100%;
+  opacity: 0.65;
+  font-size: 0.78rem;
 }
 
 @media (max-width: 720px) {

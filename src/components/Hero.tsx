@@ -10,8 +10,8 @@ export function Hero() {
       <div className="hero-stage">
         <HeroCanvas
           product="crew"
-          color="#4ecdc4"
-          ink="#0b2a2a"
+          color="#6fbfbf"
+          ink="#1a2f2f"
           print="crest"
           playerName="WILL"
           playerNumber="10"

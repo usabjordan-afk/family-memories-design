@@ -75,7 +75,7 @@ function weaveNormalMap() {
   ctx.putImageData(img, 0, 0)
   const tex = new THREE.CanvasTexture(canvas)
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-  tex.repeat.set(28, 28)
+  tex.repeat.set(48, 48)
   tex.anisotropy = 16
   tex.colorSpace = THREE.NoColorSpace
   return tex
@@ -104,20 +104,20 @@ function fabricFrom(orig: THREE.Material, color: string, matName: string) {
   m.side = THREE.DoubleSide
   m.envMapIntensity = 0.9
 
-  if (m.normalMap) {
-    m.normalScale = new THREE.Vector2(1.25, 1.25)
+  if (m.normalMap && m.normalMap !== sharedWeave) {
+    m.normalScale = new THREE.Vector2(1.65, 1.65)
     m.normalMap.anisotropy = 16
   } else {
     m.normalMap = sharedWeave
-    m.normalScale = new THREE.Vector2(0.7, 0.7)
+    m.normalScale = new THREE.Vector2(1.1, 1.1)
   }
-  if (m.aoMap) m.aoMapIntensity = 1.15
+  if (m.aoMap) m.aoMapIntensity = 1.35
 
   if (matName === 'fabric_rib') {
     m.color.multiplyScalar(0.93)
     m.roughness = 0.86
     m.sheenRoughness = 0.48
-    m.normalScale = new THREE.Vector2(1.55, 1.55)
+    m.normalScale = new THREE.Vector2(2.0, 2.0)
   }
   if (matName === 'zip_tape') m.color.multiplyScalar(0.8)
 

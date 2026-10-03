@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {
   ContactShadows,
   Environment,
@@ -11,6 +11,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { ApparelModel } from './ApparelModel'
 import type { PrintStyle, ProductId } from '../lib/products'
+
+export type ViewSide = 'front' | 'back'
 
 declare global {
   interface Window {
@@ -59,8 +61,21 @@ function Effects() {
   )
 }
 
-function GarmentOrbit({ autoRotate = true }: { autoRotate?: boolean }) {
+function GarmentOrbit({
+  autoRotate = true,
+  viewSide = 'front',
+}: {
+  autoRotate?: boolean
+  viewSide?: ViewSide
+}) {
   const controls = useRef<OrbitControlsImpl>(null)
+  const targetTheta = useRef(0)
+  const { camera } = useThree()
+
+  useEffect(() => {
+    targetTheta.current = viewSide === 'back' ? Math.PI : 0
+    if (controls.current) controls.current.autoRotate = false
+  }, [viewSide])
 
   useEffect(() => {
     const el = controls.current?.domElement
@@ -84,6 +99,24 @@ function GarmentOrbit({ autoRotate = true }: { autoRotate?: boolean }) {
       unlockScroll()
     }
   }, [])
+
+  useFrame(() => {
+    const c = controls.current
+    if (!c) return
+    const offset = camera.position.clone().sub(c.target)
+    const spherical = new THREE.Spherical().setFromVector3(offset)
+    let diff = targetTheta.current - spherical.theta
+    while (diff > Math.PI) diff -= Math.PI * 2
+    while (diff < -Math.PI) diff += Math.PI * 2
+    if (Math.abs(diff) > 0.008) {
+      spherical.theta += diff * 0.14
+      offset.setFromSpherical(spherical)
+      camera.position.copy(c.target).add(offset)
+      c.update()
+    } else if (autoRotate && Math.abs(diff) <= 0.008) {
+      c.autoRotate = true
+    }
+  })
 
   return (
     <OrbitControls
@@ -120,11 +153,13 @@ function CanvasShell({
   className,
   camera,
   autoRotate,
+  viewSide,
   children,
 }: {
   className?: string
   camera: { position: [number, number, number]; fov: number }
   autoRotate?: boolean
+  viewSide?: ViewSide
   children: React.ReactNode
 }) {
   return (
@@ -146,6 +181,7 @@ function CanvasShell({
           antialias: true,
           alpha: true,
           powerPreference: 'high-performance',
+          preserveDrawingBuffer: true,
         }}
         onCreated={({ gl }) => {
           configureGl(gl)
@@ -163,7 +199,7 @@ function CanvasShell({
             background={false}
           />
           {children}
-          <GarmentOrbit autoRotate={autoRotate} />
+          <GarmentOrbit autoRotate={autoRotate} viewSide={viewSide} />
           <Effects />
         </Suspense>
       </Canvas>
@@ -220,6 +256,8 @@ export function StudioCanvas({
   print,
   playerName,
   playerNumber,
+  viewSide = 'front',
+  customLogoUrl = null,
 }: {
   product: ProductId
   color: string
@@ -227,12 +265,15 @@ export function StudioCanvas({
   print: PrintStyle
   playerName: string
   playerNumber: string
+  viewSide?: ViewSide
+  customLogoUrl?: string | null
 }) {
   return (
     <CanvasShell
       className="canvas-wrap studio-canvas"
       camera={{ position: [0.1, 0.12, 5.6], fov: 26 }}
       autoRotate={false}
+      viewSide={viewSide}
     >
       <Float speed={0.55} rotationIntensity={0} floatIntensity={0.08}>
         <ApparelModel
@@ -242,6 +283,7 @@ export function StudioCanvas({
           print={print}
           playerName={playerName}
           playerNumber={playerNumber}
+          customLogoUrl={customLogoUrl}
         />
       </Float>
       <ContactShadows

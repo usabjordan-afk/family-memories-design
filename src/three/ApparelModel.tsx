@@ -306,6 +306,7 @@ export function ApparelModel({
   playerName,
   playerNumber,
   animated = false,
+  customLogoUrl = null,
 }: {
   product: ProductId
   color: string
@@ -314,6 +315,7 @@ export function ApparelModel({
   playerName: string
   playerNumber: string
   animated?: boolean
+  customLogoUrl?: string | null
 }) {
   const kind = kindFromProduct(product)
   const gltf = useGLTF(MODEL_URL[kind], true, true)
@@ -325,8 +327,9 @@ export function ApparelModel({
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => setLogo(img)
-    img.src = '/img/logo2x.png'
-  }, [])
+    img.onerror = () => setLogo(null)
+    img.src = customLogoUrl || '/img/logo2x.png'
+  }, [customLogoUrl])
 
   const prepared = useMemo(() => {
     const holder = new THREE.Group()
@@ -415,11 +418,12 @@ export function ApparelModel({
     if (print !== 'blank') {
       const spec = print === 'left' ? cfg.left : cfg.full
       const aspect =
-        frontTex.image && frontTex.image.height
-          ? frontTex.image.height / frontTex.image.width
+        frontTex.image && (frontTex.image as HTMLCanvasElement).height
+          ? (frontTex.image as HTMLCanvasElement).height /
+            (frontTex.image as HTMLCanvasElement).width
           : 1
       const w = spec.w
-      const h = w * aspect
+      const h = w * Math.min(aspect, 1.35)
       placeDecal(
         target,
         holder,

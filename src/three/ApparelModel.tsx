@@ -52,6 +52,37 @@ function toFloat(attr: THREE.BufferAttribute | THREE.InterleavedBufferAttribute)
   return new THREE.BufferAttribute(out, attr.itemSize)
 }
 
+function weaveNormalMap() {
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const img = ctx.createImageData(size, size)
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4
+      // Fine knit pattern → fake tangent-space normal
+      const wx = Math.sin(x * 0.55) * 0.5 + 0.5
+      const wy = Math.sin(y * 0.55) * 0.5 + 0.5
+      const nx = (wx - 0.5) * 0.35 + 0.5
+      const ny = (wy - 0.5) * 0.35 + 0.5
+      img.data[i] = Math.floor(nx * 255)
+      img.data[i + 1] = Math.floor(ny * 255)
+      img.data[i + 2] = 255
+      img.data[i + 3] = 255
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(28, 28)
+  tex.anisotropy = 16
+  tex.colorSpace = THREE.NoColorSpace
+  return tex
+}
+
+const sharedWeave = weaveNormalMap()
+
 function fabricFrom(orig: THREE.Material, color: string, matName: string) {
   const m = new THREE.MeshPhysicalMaterial()
   THREE.MeshStandardMaterial.prototype.copy.call(
@@ -62,29 +93,38 @@ function fabricFrom(orig: THREE.Material, color: string, matName: string) {
   // Keep weave detail (normal / AO), drop baked color so we can dye cleanly
   m.map = null
   m.color = new THREE.Color(color)
-  m.roughness = 0.88
+  m.roughness = 0.82
   m.metalness = 0
   m.sheen = 1
-  m.sheenRoughness = 0.55
+  m.sheenRoughness = 0.45
   m.sheenColor = new THREE.Color('#ffffff')
-  m.clearcoat = 0.02
-  m.clearcoatRoughness = 0.9
+  m.clearcoat = 0.04
+  m.clearcoatRoughness = 0.78
   m.side = THREE.DoubleSide
-  m.envMapIntensity = 0.85
+  m.envMapIntensity = 1.05
+
   if (m.normalMap) {
-    m.normalScale = new THREE.Vector2(0.85, 0.85)
+    m.normalScale = new THREE.Vector2(1.15, 1.15)
     m.normalMap.anisotropy = 16
+  } else {
+    m.normalMap = sharedWeave
+    m.normalScale = new THREE.Vector2(0.55, 0.55)
   }
-  if (m.aoMap) m.aoMapIntensity = 0.85
-  if (matName === 'fabric_rib') m.color.multiplyScalar(0.94)
+  if (m.aoMap) m.aoMapIntensity = 1
+
+  if (matName === 'fabric_rib') {
+    m.color.multiplyScalar(0.94)
+    m.roughness = 0.9
+    m.normalScale = new THREE.Vector2(1.4, 1.4)
+  }
   if (matName === 'zip_tape') m.color.multiplyScalar(0.82)
 
   const hsl = { h: 0, s: 0, l: 0 }
   new THREE.Color(color).getHSL(hsl)
-  m.sheen = hsl.l < 0.2 ? 0.55 : 1
+  m.sheen = hsl.l < 0.2 ? 0.65 : 1.15
   m.sheenColor = new THREE.Color(color).lerp(
     new THREE.Color('#ffffff'),
-    0.28 + hsl.l * 0.45,
+    0.32 + hsl.l * 0.48,
   )
 
   // Slightly darker interior so cloth reads thicker
@@ -92,10 +132,10 @@ function fabricFrom(orig: THREE.Material, color: string, matName: string) {
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
-       if (!gl_FrontFacing) { diffuseColor.rgb *= 0.58; }`,
+       if (!gl_FrontFacing) { diffuseColor.rgb *= 0.55; }`,
     )
   }
-  m.customProgramCacheKey = () => 'fmd-fabric-v2'
+  m.customProgramCacheKey = () => 'fmd-fabric-v3'
   return m
 }
 

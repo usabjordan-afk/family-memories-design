@@ -93,38 +93,40 @@ function fabricFrom(orig: THREE.Material, color: string, matName: string) {
   // Keep weave detail (normal / AO), drop baked color so we can dye cleanly
   m.map = null
   m.color = new THREE.Color(color)
-  m.roughness = 0.82
+  // Soft fleece / jersey response
+  m.roughness = 0.78
   m.metalness = 0
-  m.sheen = 1
-  m.sheenRoughness = 0.45
+  m.sheen = 1.2
+  m.sheenRoughness = 0.38
   m.sheenColor = new THREE.Color('#ffffff')
-  m.clearcoat = 0.04
-  m.clearcoatRoughness = 0.78
+  m.clearcoat = 0.015
+  m.clearcoatRoughness = 0.85
   m.side = THREE.DoubleSide
-  m.envMapIntensity = 1.05
+  m.envMapIntensity = 0.9
 
   if (m.normalMap) {
-    m.normalScale = new THREE.Vector2(1.15, 1.15)
+    m.normalScale = new THREE.Vector2(1.25, 1.25)
     m.normalMap.anisotropy = 16
   } else {
     m.normalMap = sharedWeave
-    m.normalScale = new THREE.Vector2(0.55, 0.55)
+    m.normalScale = new THREE.Vector2(0.7, 0.7)
   }
-  if (m.aoMap) m.aoMapIntensity = 1
+  if (m.aoMap) m.aoMapIntensity = 1.15
 
   if (matName === 'fabric_rib') {
-    m.color.multiplyScalar(0.94)
-    m.roughness = 0.9
-    m.normalScale = new THREE.Vector2(1.4, 1.4)
+    m.color.multiplyScalar(0.93)
+    m.roughness = 0.86
+    m.sheenRoughness = 0.48
+    m.normalScale = new THREE.Vector2(1.55, 1.55)
   }
-  if (matName === 'zip_tape') m.color.multiplyScalar(0.82)
+  if (matName === 'zip_tape') m.color.multiplyScalar(0.8)
 
   const hsl = { h: 0, s: 0, l: 0 }
   new THREE.Color(color).getHSL(hsl)
-  m.sheen = hsl.l < 0.2 ? 0.65 : 1.15
+  m.sheen = hsl.l < 0.2 ? 0.7 : 1.25
   m.sheenColor = new THREE.Color(color).lerp(
     new THREE.Color('#ffffff'),
-    0.32 + hsl.l * 0.48,
+    0.38 + hsl.l * 0.45,
   )
 
   // Slightly darker interior so cloth reads thicker

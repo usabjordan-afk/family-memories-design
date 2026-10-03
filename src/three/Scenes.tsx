@@ -6,6 +6,7 @@ import {
   Float,
   PresentationControls,
 } from '@react-three/drei'
+import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { ApparelModel } from './ApparelModel'
 import type { PrintStyle, ProductId } from '../lib/products'
@@ -13,45 +14,42 @@ import type { PrintStyle, ProductId } from '../lib/products'
 function StudioLights() {
   return (
     <>
-      <hemisphereLight args={['#f7fafc', '#15202b', 0.7]} />
+      <hemisphereLight args={['#ffffff', '#1c2833', 0.55]} />
       <directionalLight
         castShadow
-        position={[-3, 4.5, 5]}
-        intensity={2.8}
-        color="#fff8f2"
+        position={[-3.2, 4.8, 5.2]}
+        intensity={2.55}
+        color="#fff6f0"
         shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.00015}
-        shadow-normalBias={0.02}
+        shadow-bias={-0.00012}
+        shadow-normalBias={0.025}
       />
-      <directionalLight position={[4.2, 2.4, -3.8]} intensity={1.7} color="#b9dcff" />
-      <directionalLight position={[0.5, 5, 1.5]} intensity={0.8} color="#ffffff" />
-      <spotLight
-        position={[0, 5.5, 3]}
-        angle={0.4}
-        penumbra={0.75}
-        intensity={1.35}
-        color="#fff4e8"
-      />
+      <directionalLight position={[4.5, 2.6, -4]} intensity={1.65} color="#c3ddff" />
+      <directionalLight position={[0, 6, 2]} intensity={0.75} color="#ffffff" />
     </>
   )
 }
 
-function SoftEnv() {
-  return (
-    <Environment
-      files="/hdri/studio.hdr"
-      environmentIntensity={0.95}
-      background={false}
-    />
-  )
-}
-
 function configureGl(gl: THREE.WebGLRenderer) {
-  gl.toneMapping = THREE.ACESFilmicToneMapping
-  gl.toneMappingExposure = 1.12
+  gl.toneMapping = THREE.NeutralToneMapping
+  gl.toneMappingExposure = 1.05
   gl.outputColorSpace = THREE.SRGBColorSpace
   gl.shadowMap.enabled = true
   gl.shadowMap.type = THREE.PCFShadowMap
+}
+
+function Effects() {
+  return (
+    <EffectComposer multisampling={4}>
+      <N8AO
+        aoRadius={0.55}
+        intensity={1.35}
+        distanceFalloff={0.75}
+        quality="high"
+        halfRes
+      />
+    </EffectComposer>
+  )
 }
 
 export function HeroCanvas({
@@ -80,12 +78,16 @@ export function HeroCanvas({
           powerPreference: 'high-performance',
         }}
         onCreated={({ gl }) => configureGl(gl)}
-        camera={{ position: [0.25, 0.2, 5.7], fov: 26 }}
+        camera={{ position: [0.35, 0.18, 6.1], fov: 26 }}
       >
         <Suspense fallback={null}>
           <StudioLights />
-          <SoftEnv />
-          <Float speed={0.95} rotationIntensity={0.06} floatIntensity={0.18}>
+          <Environment
+            files="/hdri/studio.hdr"
+            environmentIntensity={0.75}
+            background={false}
+          />
+          <Float speed={0.9} rotationIntensity={0.05} floatIntensity={0.16}>
             <ApparelModel
               product={product}
               color={color}
@@ -98,11 +100,12 @@ export function HeroCanvas({
           </Float>
           <ContactShadows
             position={[0, -1.3, 0]}
-            opacity={0.58}
+            opacity={0.5}
             scale={10}
-            blur={3.4}
+            blur={3.5}
             far={5}
           />
+          <Effects />
         </Suspense>
       </Canvas>
     </div>
@@ -135,19 +138,23 @@ export function StudioCanvas({
           powerPreference: 'high-performance',
         }}
         onCreated={({ gl }) => configureGl(gl)}
-        camera={{ position: [0, 0.15, 5.35], fov: 26 }}
+        camera={{ position: [0.1, 0.12, 5.6], fov: 26 }}
       >
         <Suspense fallback={null}>
           <StudioLights />
-          <SoftEnv />
+          <Environment
+            files="/hdri/studio.hdr"
+            environmentIntensity={0.8}
+            background={false}
+          />
           <PresentationControls
             global
             snap
-            rotation={[0.02, 0.2, 0]}
-            polar={[-0.16, 0.2]}
-            azimuth={[-0.95, 0.95]}
+            rotation={[0.02, 0.22, 0]}
+            polar={[-0.15, 0.2]}
+            azimuth={[-1, 1]}
           >
-            <Float speed={0.65} rotationIntensity={0.03} floatIntensity={0.12}>
+            <Float speed={0.6} rotationIntensity={0.03} floatIntensity={0.1}>
               <ApparelModel
                 product={product}
                 color={color}
@@ -160,11 +167,12 @@ export function StudioCanvas({
           </PresentationControls>
           <ContactShadows
             position={[0, -1.28, 0]}
-            opacity={0.52}
+            opacity={0.48}
             scale={9}
-            blur={3}
+            blur={3.1}
             far={4.5}
           />
+          <Effects />
         </Suspense>
       </Canvas>
     </div>

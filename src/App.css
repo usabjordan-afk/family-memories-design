@@ -121,11 +121,29 @@
   pointer-events: none;
 }
 
+.canvas-wrap {
+  touch-action: none;
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.canvas-wrap canvas {
+  outline: none;
+  touch-action: none !important;
+  cursor: grab;
+}
+
+.canvas-wrap canvas:active {
+  cursor: grabbing;
+}
+
 .hero-stage {
   position: absolute;
   inset: 8% 0 0 38%;
   z-index: 2;
   pointer-events: auto;
+  touch-action: none;
 }
 
 .hero-stage .canvas-wrap,
@@ -136,9 +154,10 @@
 
 @media (max-width: 899px) {
   .hero-stage {
-    inset: 0;
-    opacity: 0.55;
-    pointer-events: none;
+    inset: 0 0 42% 0;
+    opacity: 0.9;
+    pointer-events: auto;
+    touch-action: none;
   }
 }
 
@@ -296,6 +315,8 @@
   min-height: min(68vh, 640px);
   border-radius: 1.5rem;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
   background:
     radial-gradient(circle at 50% 30%, rgba(58, 214, 191, 0.16), transparent 55%),
     linear-gradient(160deg, #0f2430, #071018 70%);
@@ -809,10 +830,16 @@
     );
     padding: 4rem 0 0;
     width: 100%;
+    pointer-events: none;
+  }
+
+  .hero-copy .btn,
+  .hero-copy a {
+    pointer-events: auto;
   }
 
   .hero-stage {
-    opacity: 0.88;
+    opacity: 0.95;
   }
 
   .nav-cta {

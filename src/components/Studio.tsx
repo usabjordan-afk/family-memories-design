@@ -44,7 +44,7 @@ export function Studio() {
               playerName={name}
               playerNumber={number}
             />
-            <p className="studio-hint">Drag to rotate · scroll-friendly</p>
+            <p className="studio-hint">Drag to rotate</p>
           </div>
 
           <div className="studio-panel">

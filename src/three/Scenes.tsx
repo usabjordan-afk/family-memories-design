@@ -1,15 +1,22 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import {
   ContactShadows,
   Environment,
   Float,
-  PresentationControls,
+  OrbitControls,
 } from '@react-three/drei'
 import { EffectComposer, N8AO } from '@react-three/postprocessing'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { ApparelModel } from './ApparelModel'
 import type { PrintStyle, ProductId } from '../lib/products'
+
+declare global {
+  interface Window {
+    __fmdLenis?: { stop: () => void; start: () => void }
+  }
+}
 
 function StudioLights() {
   return (
@@ -52,6 +59,118 @@ function Effects() {
   )
 }
 
+function GarmentOrbit({ autoRotate = true }: { autoRotate?: boolean }) {
+  const controls = useRef<OrbitControlsImpl>(null)
+
+  useEffect(() => {
+    const el = controls.current?.domElement
+    if (!el) return
+
+    const lockScroll = () => window.__fmdLenis?.stop()
+    const unlockScroll = () => window.__fmdLenis?.start()
+
+    el.addEventListener('pointerdown', lockScroll)
+    el.addEventListener('pointerup', unlockScroll)
+    el.addEventListener('pointercancel', unlockScroll)
+    el.addEventListener('pointerleave', unlockScroll)
+    window.addEventListener('pointerup', unlockScroll)
+
+    return () => {
+      el.removeEventListener('pointerdown', lockScroll)
+      el.removeEventListener('pointerup', unlockScroll)
+      el.removeEventListener('pointercancel', unlockScroll)
+      el.removeEventListener('pointerleave', unlockScroll)
+      window.removeEventListener('pointerup', unlockScroll)
+      unlockScroll()
+    }
+  }, [])
+
+  return (
+    <OrbitControls
+      ref={controls}
+      makeDefault
+      enablePan={false}
+      enableZoom={false}
+      enableDamping
+      dampingFactor={0.08}
+      rotateSpeed={0.9}
+      autoRotate={autoRotate}
+      autoRotateSpeed={1.15}
+      minPolarAngle={Math.PI * 0.32}
+      maxPolarAngle={Math.PI * 0.62}
+      target={[0, 0.05, 0]}
+    />
+  )
+}
+
+function bindCanvasScrollLock(canvas: HTMLCanvasElement) {
+  canvas.style.touchAction = 'none'
+  const block = (e: Event) => {
+    e.preventDefault()
+  }
+  canvas.addEventListener('wheel', block, { passive: false })
+  canvas.addEventListener('touchmove', block, { passive: false })
+  return () => {
+    canvas.removeEventListener('wheel', block)
+    canvas.removeEventListener('touchmove', block)
+  }
+}
+
+function CanvasShell({
+  className,
+  camera,
+  autoRotate,
+  children,
+}: {
+  className?: string
+  camera: { position: [number, number, number]; fov: number }
+  autoRotate?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className={className ?? 'canvas-wrap'}
+      data-orbit="true"
+      data-lenis-prevent
+      data-lenis-prevent-touch
+      data-lenis-prevent-wheel
+      style={{ width: '100%', height: '100%', touchAction: 'none' }}
+      onPointerDown={() => window.__fmdLenis?.stop()}
+      onPointerUp={() => window.__fmdLenis?.start()}
+      onPointerCancel={() => window.__fmdLenis?.start()}
+    >
+      <Canvas
+        shadows
+        dpr={[1.75, 2]}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        }}
+        onCreated={({ gl }) => {
+          configureGl(gl)
+          bindCanvasScrollLock(gl.domElement)
+        }}
+        camera={camera}
+        style={{ touchAction: 'none' }}
+        onPointerMissed={() => window.__fmdLenis?.start()}
+      >
+        <Suspense fallback={null}>
+          <StudioLights />
+          <Environment
+            files="/hdri/studio.hdr"
+            environmentIntensity={0.78}
+            background={false}
+          />
+          {children}
+          <GarmentOrbit autoRotate={autoRotate} />
+          <Effects />
+        </Suspense>
+      </Canvas>
+    </div>
+  )
+}
+
 export function HeroCanvas({
   product,
   color,
@@ -68,47 +187,29 @@ export function HeroCanvas({
   playerNumber: string
 }) {
   return (
-    <div className="canvas-wrap" style={{ width: '100%', height: '100%' }}>
-      <Canvas
-        shadows
-        dpr={[1.75, 2]}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: 'high-performance',
-        }}
-        onCreated={({ gl }) => configureGl(gl)}
-        camera={{ position: [0.35, 0.18, 6.1], fov: 26 }}
-      >
-        <Suspense fallback={null}>
-          <StudioLights />
-          <Environment
-            files="/hdri/studio.hdr"
-            environmentIntensity={0.75}
-            background={false}
-          />
-          <Float speed={0.9} rotationIntensity={0.05} floatIntensity={0.16}>
-            <ApparelModel
-              product={product}
-              color={color}
-              ink={ink}
-              print={print}
-              playerName={playerName}
-              playerNumber={playerNumber}
-              animated
-            />
-          </Float>
-          <ContactShadows
-            position={[0, -1.3, 0]}
-            opacity={0.5}
-            scale={10}
-            blur={3.5}
-            far={5}
-          />
-          <Effects />
-        </Suspense>
-      </Canvas>
-    </div>
+    <CanvasShell
+      camera={{ position: [0.35, 0.18, 6.1], fov: 26 }}
+      autoRotate
+    >
+      <Float speed={0.9} rotationIntensity={0} floatIntensity={0.14}>
+        <ApparelModel
+          product={product}
+          color={color}
+          ink={ink}
+          print={print}
+          playerName={playerName}
+          playerNumber={playerNumber}
+          animated={false}
+        />
+      </Float>
+      <ContactShadows
+        position={[0, -1.3, 0]}
+        opacity={0.5}
+        scale={10}
+        blur={3.5}
+        far={5}
+      />
+    </CanvasShell>
   )
 }
 
@@ -128,53 +229,28 @@ export function StudioCanvas({
   playerNumber: string
 }) {
   return (
-    <div className="canvas-wrap studio-canvas">
-      <Canvas
-        shadows
-        dpr={[1.75, 2]}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: 'high-performance',
-        }}
-        onCreated={({ gl }) => configureGl(gl)}
-        camera={{ position: [0.1, 0.12, 5.6], fov: 26 }}
-      >
-        <Suspense fallback={null}>
-          <StudioLights />
-          <Environment
-            files="/hdri/studio.hdr"
-            environmentIntensity={0.8}
-            background={false}
-          />
-          <PresentationControls
-            global
-            snap
-            rotation={[0.02, 0.22, 0]}
-            polar={[-0.15, 0.2]}
-            azimuth={[-1, 1]}
-          >
-            <Float speed={0.6} rotationIntensity={0.03} floatIntensity={0.1}>
-              <ApparelModel
-                product={product}
-                color={color}
-                ink={ink}
-                print={print}
-                playerName={playerName}
-                playerNumber={playerNumber}
-              />
-            </Float>
-          </PresentationControls>
-          <ContactShadows
-            position={[0, -1.28, 0]}
-            opacity={0.48}
-            scale={9}
-            blur={3.1}
-            far={4.5}
-          />
-          <Effects />
-        </Suspense>
-      </Canvas>
-    </div>
+    <CanvasShell
+      className="canvas-wrap studio-canvas"
+      camera={{ position: [0.1, 0.12, 5.6], fov: 26 }}
+      autoRotate={false}
+    >
+      <Float speed={0.55} rotationIntensity={0} floatIntensity={0.08}>
+        <ApparelModel
+          product={product}
+          color={color}
+          ink={ink}
+          print={print}
+          playerName={playerName}
+          playerNumber={playerNumber}
+        />
+      </Float>
+      <ContactShadows
+        position={[0, -1.28, 0]}
+        opacity={0.48}
+        scale={9}
+        blur={3.1}
+        far={4.5}
+      />
+    </CanvasShell>
   )
 }

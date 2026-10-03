@@ -80,7 +80,7 @@ export function Hero() {
         aria-hidden
       >
         <span />
-        Drag or scroll
+        Drag to rotate
       </motion.div>
     </section>
   )

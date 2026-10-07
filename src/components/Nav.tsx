@@ -16,7 +16,13 @@ export function Nav() {
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
       <a className="nav-brand" href="#top" aria-label="Family Memories Design home">
-        <img className="nav-logo" src="/img/logo.png" alt="" width="40" height="32" />
+        <img
+          className="nav-logo"
+          src={`${import.meta.env.BASE_URL}img/logo.png`}
+          alt=""
+          width="40"
+          height="32"
+        />
         <span className="nav-name">
           Family Memories
           <em>Design</em>

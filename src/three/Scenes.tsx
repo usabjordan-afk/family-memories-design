@@ -171,7 +171,7 @@ function CanvasShell({
         <Suspense fallback={null}>
           <StudioLights />
           <Environment
-            files="/hdri/studio.hdr"
+            files={`${import.meta.env.BASE_URL}hdri/studio.hdr`}
             environmentIntensity={0.78}
             background={false}
           />

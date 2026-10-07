@@ -6,15 +6,15 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import * as THREE from 'three'
 import type { PrintStyle, ProductId } from '../lib/products'
 
-useGLTF.preload('/models/crewneck.glb', true, true)
-useGLTF.preload('/models/tshirt.glb', true, true)
-useGLTF.preload('/models/hoodie.glb', true, true)
-
 const MODEL_URL = {
-  crew: '/models/crewneck.glb',
-  tee: '/models/tshirt.glb',
-  hoodie: '/models/hoodie.glb',
+  crew: `${import.meta.env.BASE_URL}models/crewneck.glb`,
+  tee: `${import.meta.env.BASE_URL}models/tshirt.glb`,
+  hoodie: `${import.meta.env.BASE_URL}models/hoodie.glb`,
 } as const
+
+useGLTF.preload(MODEL_URL.crew, true, true)
+useGLTF.preload(MODEL_URL.tee, true, true)
+useGLTF.preload(MODEL_URL.hoodie, true, true)
 
 const PRINT = {
   crew: {
@@ -328,7 +328,7 @@ export function ApparelModel({
     img.crossOrigin = 'anonymous'
     img.onload = () => setLogo(img)
     img.onerror = () => setLogo(null)
-    img.src = customLogoUrl || '/img/logo2x.png'
+    img.src = customLogoUrl || `${import.meta.env.BASE_URL}img/logo2x.png`
   }, [customLogoUrl])
 
   const prepared = useMemo(() => {

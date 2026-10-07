@@ -39,7 +39,10 @@ export function Directors() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 1 }}
           >
-            <img src="/action.jpg" alt="Tournament play under lights" />
+            <img
+              src={`${import.meta.env.BASE_URL}action.jpg`}
+              alt="Tournament play under lights"
+            />
           </motion.div>
 
           <ol className="directors-steps">

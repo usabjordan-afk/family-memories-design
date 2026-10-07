@@ -26,7 +26,10 @@ export function Story() {
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <img src="/field.jpg" alt="Youth athletes celebrating on the field" />
+          <img
+            src={`${import.meta.env.BASE_URL}field.jpg`}
+            alt="Youth athletes celebrating on the field"
+          />
           <div className="story-visual-overlay" />
           <p className="story-caption">The shirt they keep after the whistle.</p>
         </motion.div>

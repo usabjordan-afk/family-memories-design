@@ -1,0 +1,14 @@
+/*
+Theme Name: Family Memories Design — Wear Memories
+Theme URI: https://familymemoriesdesign.com
+Author: Family Memories Design
+Description: Tournament apparel printed while you wait. One-page site with a live 3D apparel studio, design library, pricing, booth and booking form (requests are emailed and saved under Bookings in wp-admin). Edit text, prices, photos and 3D models in Appearance → Customize → Wear Memories.
+Version: 2.0.5
+Requires at least: 6.0
+Tested up to: 6.6
+Requires PHP: 7.4
+License: Proprietary
+Text Domain: fmd
+*/
+
+/* All styles live in assets/css/main.css (enqueued in functions.php). */
